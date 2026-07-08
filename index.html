@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Uresoft | Software e Inteligencia a tu Medida</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para las alertas estéticas -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased">
 
@@ -87,29 +89,92 @@
             </div>
         </div>
     </section>
-
-    <!-- Contacto -->
+<!-- Contacto -->
     <section id="contacto" class="max-w-3xl mx-auto px-6 py-20 text-center">
         <h2 class="text-3xl font-bold text-slate-900">¿Preparado para dar el salto?</h2>
         <p class="mt-4 text-slate-600 mb-10">Cuéntanos tu idea o el cuello de botella que quieres eliminar y te propondremos la solución ideal.</p>
         
-        <form class="space-y-4 text-left bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
+        <!-- Formulario con ID para controlarlo por JS -->
+        <form id="contactForm" class="space-y-4 text-left bg-white p-8 rounded-2xl border border-slate-100 shadow-sm">
+            
+            <!-- Configuración para StaticForms -->
+            <input type="hidden" name="email" value="subdirectoradjunto@gmail.com">
+            
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Nombre</label>
-                <input type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="Tu nombre" required>
+                <input type="text" name="name" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="Tu nombre" required>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Correo Electrónico</label>
-                <input type="email" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="tu@email.com" required>
+                <input type="email" name="_replyTo" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="tu@email.com" required>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-2">Proyecto o Idea</label>
-                <textarea rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="Cuéntanos brevemente qué necesitas..." required></textarea>
+                <textarea name="message" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 transition" placeholder="Cuéntanos brevemente qué necesitas..." required></textarea>
             </div>
-            <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-4 rounded-xl hover:bg-indigo-700 transition shadow-md">Enviar Mensaje</button>
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white font-semibold py-4 rounded-xl hover:bg-indigo-700 transition shadow-md flex items-center justify-center gap-2">
+                Enviar Mensaje
+            </button>
         </form>
     </section>
 
+    <!-- Lógica en JavaScript para procesar en segundo plano -->
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Evita que la página se recargue
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const formData = new FormData(this);
+            
+            // Convertimos FormData a un objeto JSON compatible con StaticForms
+            const object = {};
+            formData.forEach((value, key) => object[key] = value);
+            const json = JSON.stringify(object);
+
+            // Cambiamos el estado del botón visualmente
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Enviando...';
+
+            // Enviamos la petición vía Fetch API
+            fetch('https://api.staticforms.xyz/process', {
+                method: 'POST',
+                body: json,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Lanzamos SweetAlert de éxito
+                    Swal.fire({
+                        title: '¡Mensaje Enviado!',
+                        text: 'Nos pondremos en contacto contigo lo antes posible.',
+                        icon: 'success',
+                        confirmButtonColor: '#4f46e5', // Color índigo a juego
+                        confirmButtonText: 'Genial'
+                    });
+                    document.getElementById('contactForm').reset(); // Limpiamos el formulario
+                } else {
+                    throw new Error('Error en la respuesta del servidor');
+                }
+            })
+            .catch(error => {
+                // Alerta en caso de error de red o de la API
+                Swal.fire({
+                    title: '¡Ups!',
+                    text: 'Hubo un problema al enviar tu mensaje. Por favor, inténtalo de nuevo.',
+                    icon: 'error',
+                    confirmButtonColor: '#94a3b8'
+                });
+            })
+            .finally(() => {
+                // Restauramos el botón
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Enviar Mensaje';
+            });
+        });
+    </script>
     <!-- Footer -->
     <footer class="bg-slate-900 text-slate-400 py-8 text-center text-sm border-t border-slate-800">
         <p>&copy; 2026 Uresoft. Todos los derechos reservados.</p>
